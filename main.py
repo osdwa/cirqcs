@@ -1,5 +1,4 @@
 from eval_main import rate_repo
-from threading import Thread
 from gui import PathChooser, SplashScreen, Application
 
 
