@@ -1,9 +1,17 @@
 import tkinter as tk
 import tkinter.ttk as ttk
 import tkinter.filedialog as fd
+import tkinter.messagebox as mb
 import tkinter.simpledialog as sd
 
+from xml_report import report_to_xml, xml_to_report
+
 app_name = "C.I.R.Q.C.S."  # Code In Repository Quality Checking Service
+
+types_xml = [
+    ("XML file", "*.xml"),
+    ("All files", "*.*")
+]
 
 
 class PathChooser(sd.Dialog):
@@ -45,26 +53,30 @@ class SplashScreen(tk.Tk):
         self.status.pack()
 
     def set_status(self, status):
+        print("Splash:", status)
         self.status.configure(text=status)
         self.update()
 
 
 class Application:
-    def __init__(self, remarks, base_path):
-        self.remark_info = remarks
+    def __init__(self):
+        self.remark_label = ""
+        self.remark_info = {}
         self.all_type_text = " [ All ]"
         self.sel_evaluator = None
         self.sel_file = None
         self.sel_type = None
 
         self.root = tk.Tk()
-        self.root.title(f"{app_name} - {base_path}")
+        self.root.title(app_name)
 
         self.upper_menu = tk.LabelFrame(self.root, padx=2, pady=5)
+        self.button_export = ttk.Button(self.upper_menu, text="Export as XML", width=15)
+        self.button_import = ttk.Button(self.upper_menu, text="Import XML", width=15)
         self.button_clipboard = ttk.Button(self.upper_menu, text="Copy remarks to clipboard")
         self.button_exit = ttk.Button(self.upper_menu, text="Exit", command=quit)
 
-        self.surface = ttk.Frame(padding=5)
+        self.surface = ttk.Frame(self.root, padding=5)
         self.sub_surface = ttk.Frame(self.surface)
         self.sub_frame = tk.LabelFrame(self.sub_surface, padx=2, pady=2)
         self.general_comment = tk.Label(self.sub_frame, text="")
@@ -75,6 +87,8 @@ class Application:
         self.remark_scrollbar = ttk.Scrollbar(self.sub_surface)
 
         self.upper_menu.pack(side="top", fill="x")
+        self.button_export.pack(side="left")
+        self.button_import.pack(side="left")
         self.button_clipboard.pack(side="left")
         self.button_exit.pack(side="right")
 
@@ -90,15 +104,21 @@ class Application:
 
         self.remarks.configure(yscrollcommand=self.remark_scrollbar.set)
         self.remark_scrollbar.configure(command=self.remarks.yview)
+        self.button_export.config(command=self.save_to_xml)
+        self.button_import.config(command=self.read_from_xml)
         self.button_clipboard.config(command=self.copy_to_clipboard)
         self.evaluators.bind("<<ListboxSelect>>", lambda _: self.click_evaluators())
         self.file_paths.bind("<<ListboxSelect>>", lambda _: self.click_files())
         self.remark_types.bind("<<ListboxSelect>>", lambda _: self.click_types())
+        self.remarks.bind("<Return>", lambda _: self.click_remarks())
+        self.remarks.bind("<Double-Button-1>", lambda _: self.click_remarks())
 
-        self.evaluators.insert(0, *self.remark_info.keys())
-        if self.evaluators.size() > 0:
-            self.evaluators.select_set(0)
-            self.click_evaluators()
+    def update_content(self, remarks, base_path):
+        self.root.title(f"{app_name} - {base_path}")
+        self.remark_label = str(base_path)
+        self.remark_info = remarks
+
+        self.fill_evaluators()
 
     def update_selection(self):
         idx_evaluator = self.evaluators.curselection()
@@ -109,13 +129,23 @@ class Application:
         self.sel_file = self.file_paths.get(idx_file[0]) if idx_file else None
         self.sel_type = self.remark_types.get(idx_type[0]) if idx_type else None
 
-    def clean(self, files=False, types=False, remarks=False):
+    def clean(self, evaluators, files, types, remarks):
+        if evaluators:
+            self.evaluators.delete(0, tk.END)
         if files:
             self.file_paths.delete(0, tk.END)
         if types:
             self.remark_types.delete(0, tk.END)
         if remarks:
             self.remarks.delete(0, tk.END)
+
+    def fill_evaluators(self):
+        self.clean(True, True, True, True)
+
+        self.evaluators.insert(0, *self.remark_info.keys())
+        if self.evaluators.size() > 0:
+            self.evaluators.select_set(0)
+            self.click_evaluators()
 
     def click_evaluators(self):
         self.update_selection()
@@ -126,14 +156,17 @@ class Application:
             self.click_files()
 
     def fill_files(self):
+        if self.sel_evaluator is None:
+            return
+
         gen_remark = self.remark_info[self.sel_evaluator]
         self.general_comment.configure(text=gen_remark.general_rem)
 
-        files = list(gen_remark.files.keys())
+        files = sorted(gen_remark.files)
         if len(files) > 1:
             files = [self.all_type_text] + files
 
-        self.clean(True, True, True)
+        self.clean(False, True, True, True)
         self.file_paths.insert(0, *files)
 
     def click_files(self):
@@ -150,11 +183,11 @@ class Application:
 
         evaluator = self.remark_info[self.sel_evaluator]
         file_name = self.sel_file if self.sel_file != self.all_type_text else None
-        r_types = evaluator.get_all_r_types(file_name)
+        r_types = evaluator.get_all_r_long_types(file_name)
         if len(r_types) > 1:
             r_types = [self.all_type_text] + r_types
 
-        self.clean(False, True, True)
+        self.clean(False, False, True, True)
         self.remark_types.insert(0, *r_types)
 
     def click_types(self):
@@ -177,8 +210,30 @@ class Application:
             lines = remark.get_as_text(all_files, all_types)
             rem_text.extend(lines.split("\n"))
 
-        self.clean(False, False, True)
+        self.clean(False, False, False, True)
         self.remarks.insert(0, *rem_text)
+
+    def click_remarks(self):
+        select = self.remarks.curselection()
+
+        if len(select) == 1:
+            sel_text = self.remarks.get(select[0])
+            mb.showinfo(app_name, sel_text)
+
+    def save_to_xml(self):
+        path = fd.asksaveasfilename(defaultextension="xml", filetypes=types_xml)
+        if not path:
+            return
+
+        report_to_xml(path, self.remark_label, self.remark_info)
+
+    def read_from_xml(self):
+        path = fd.askopenfilename(defaultextension="xml", filetypes=types_xml)
+        if not path:
+            return
+
+        label, rem_info = xml_to_report(path)
+        self.update_content(rem_info, label)
 
     def copy_to_clipboard(self):
         if self.sel_evaluator is None or self.sel_file is None or self.sel_type is None:

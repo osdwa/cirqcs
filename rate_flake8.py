@@ -7,7 +7,7 @@ def rate_files(paths, base_path, splash) -> GeneralRemark:
     style_guide = flake8.get_style_guide(quiet=2)
     report_obj = style_guide.check_files(paths)
 
-    general_rem = f"Total: {report_obj.total_errors}"
+    general_rem = f"Total errors: {report_obj.total_errors}"
 
     remarks = GeneralRemark()
     remarks.set_general_remark(general_rem)

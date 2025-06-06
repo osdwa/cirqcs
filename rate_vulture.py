@@ -13,6 +13,6 @@ def rate_files(paths, base_path, splash) -> GeneralRemark:
         file = short_path(item.filename, base_path)
         lines = f"{item.first_lineno}-{item.last_lineno}" if item.size > 1 else str(item.first_lineno)
         message = f"{lines}: {item.message} ({item.confidence}% confidence)"
-        remarks.add_remark(file, item.typ, item.typ, message)
+        remarks.add_remark(file, "", item.typ, message)
 
     return remarks

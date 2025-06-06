@@ -11,10 +11,10 @@ class CollectingReporter(BaseReporter):
 
     def handle_message(self, msg):
         f_name = short_path(msg.path, self.base_path)
-        r_type = f"{msg.msg_id}: {msg.symbol}"
-        r_type_short = str(msg.msg_id)
+        r_type = str(msg.msg_id)
+        r_type_long = f"{msg.msg_id}: {msg.symbol}"
         content = f"{msg.line}:{msg.column}: {msg.msg}"
-        self.remarks.add_remark(f_name, r_type, r_type_short, content)
+        self.remarks.add_remark(f_name, r_type, r_type_long, content)
 
     def display_messages(self, layout):
         pass

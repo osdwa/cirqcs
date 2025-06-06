@@ -1,8 +1,11 @@
 import os
+from gui import SplashScreen
+
 import rate_flake8
 import rate_pylint
-import rate_bandit
 import rate_vulture
+import rate_bandit
+import rate_pyroma
 
 
 def find_files(path: str, filetype: str, exclude_dirs: list[str]):
@@ -19,13 +22,18 @@ def find_files(path: str, filetype: str, exclude_dirs: list[str]):
     return files
 
 
-def rate_repo(report, path, splash):
+def rate_repo(path: str, splash: SplashScreen):
     exclude_dirs = ["venv", ".venv", ".git", "__pycache__"]
+
+    splash.set_status("Detecting files...")
     files = find_files(path, ".py", exclude_dirs)
 
-    report["flake8"] = rate_flake8.rate_files(files, path, splash)
-    report["pylint"] = rate_pylint.rate_files(files, path, splash)
-    report["bandit"] = rate_bandit.rate_files(files, path, splash)
-    report["vulture"] = rate_vulture.rate_files(files, path, splash)
+    report = {
+        "flake8": rate_flake8.rate_files(files, path, splash),
+        "pylint": rate_pylint.rate_files(files, path, splash),
+        "vulture": rate_vulture.rate_files(files, path, splash),
+        "bandit": rate_bandit.rate_files(files, path, splash),
+        "pyroma": rate_pyroma.rate_repo(path, splash)
+    }
 
-    splash.destroy()
+    return report
