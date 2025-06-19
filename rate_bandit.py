@@ -12,7 +12,6 @@ def rate_files(paths, base_path, splash) -> GeneralRemark:
     manager.run_tests()
 
     remarks = GeneralRemark()
-    remarks.set_general_remark("N/A")
     for issue in manager.results:
         file_name = short_path(issue.fname, base_path)
         r_type = str(issue.test_id)
@@ -20,4 +19,5 @@ def rate_files(paths, base_path, splash) -> GeneralRemark:
         content = f"{issue.linerange}: {issue.text} (Severity: {issue.severity}, Confidence: {issue.confidence})"
         remarks.add_remark(file_name, r_type, r_type_long, content)
 
+    remarks.set_general_remark(f"Total instances: {len(remarks.remarks)}")
     return remarks

@@ -1,5 +1,6 @@
 import tkinter as tk
 import tkinter.ttk as ttk
+from gui_elements import *
 import tkinter.filedialog as fd
 import tkinter.messagebox as mb
 import tkinter.simpledialog as sd
@@ -70,34 +71,37 @@ class Application:
         self.root = tk.Tk()
         self.root.title(app_name)
 
-        self.upper_menu = tk.LabelFrame(self.root, padx=2, pady=5)
-        self.button_export = ttk.Button(self.upper_menu, text="Export as XML", width=15)
-        self.button_import = ttk.Button(self.upper_menu, text="Import XML", width=15)
-        self.button_clipboard = ttk.Button(self.upper_menu, text="Copy remarks to clipboard")
-        self.button_exit = ttk.Button(self.upper_menu, text="Exit", command=quit)
+        self.upper_menu = tk.Frame(self.root, bg="#2e2e2e", padx=2, pady=5)
+        self.button_export = Button(self.upper_menu, text="Export as XML", width=15)
+        self.button_import = Button(self.upper_menu, text="Import XML", width=15)
+        self.button_clipboard = Button(self.upper_menu, text="Copy remarks to clipboard")
+        self.button_exit = Button(self.upper_menu, text="Exit", width=10, command=quit)
 
-        self.surface = ttk.Frame(self.root, padding=5)
-        self.sub_surface = ttk.Frame(self.surface)
-        self.sub_frame = tk.LabelFrame(self.sub_surface, padx=2, pady=2)
-        self.general_comment = tk.Label(self.sub_frame, text="")
-        self.evaluators = tk.Listbox(self.surface, exportselection=0, width=20)
-        self.file_paths = tk.Listbox(self.sub_surface, exportselection=0, width=40)
-        self.remark_types = tk.Listbox(self.sub_surface, exportselection=0, width=40)
-        self.remarks = tk.Listbox(self.sub_surface, exportselection=0, selectmode="extended", width=120)
+        self.surface = tk.Frame(self.root, bg="#2e2e2e", padx=5, pady=5)
+        self.sub_surface = tk.Frame(self.surface, bg="#2e2e2e")
+        self.sub_frame1 = tk.Frame(self.sub_surface, bg="#444", padx=1, pady=1)
+        self.sub_frame2 = tk.Frame(self.sub_frame1, bg="#2e2e2e", padx=2, pady=2)
+        self.general_comment = tk.Label(self.sub_frame2, font="Arial 12 bold", fg="white", bg="#2e2e2e", text="")
+        self.evaluators = Listbox(self.surface, font="Arial 12 bold", exportselection=0, width=10)
+        self.file_paths = Listbox(self.sub_surface, exportselection=0, width=30)
+        self.remark_types = Listbox(self.sub_surface, exportselection=0, width=25)
+        self.remarks = Listbox(self.sub_surface, fg="#FF3030", sfg="#FFA0A0", font="{Courier New} 11 bold",
+                               exportselection=0, selectmode="extended")
         self.remark_scrollbar = ttk.Scrollbar(self.sub_surface)
 
         self.upper_menu.pack(side="top", fill="x")
-        self.button_export.pack(side="left")
-        self.button_import.pack(side="left")
-        self.button_clipboard.pack(side="left")
-        self.button_exit.pack(side="right")
+        self.button_export.pack(side="left", padx=1)
+        self.button_import.pack(side="left", padx=1)
+        self.button_clipboard.pack(side="left", padx=1)
+        self.button_exit.pack(side="right", padx=1)
 
         self.surface.pack(fill="both", expand=True)
         self.evaluators.pack(side="left", fill="y")
         self.sub_surface.pack(fill="both", expand=True)
-        self.sub_frame.pack(side="top", fill="x", padx=1, pady=1)
+        self.sub_frame1.pack(side="top", fill="x", padx=1)
+        self.sub_frame2.pack(fill="both", expand=True)
         self.general_comment.grid(row=0, column=0)
-        self.file_paths.pack(side="left", fill="y")
+        self.file_paths.pack(side="left", fill="y", padx=1)
         self.remark_types.pack(side="left", fill="y")
         self.remarks.pack(side="left", fill="both", expand=True)
         self.remark_scrollbar.pack(side="right", fill="y")
